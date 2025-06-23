@@ -1,17 +1,17 @@
-# 🕵️‍♂️ Financial Fraud Detection Dashboard
+# Financial Fraud Detection Dashboard
 
 This project is a real-time interactive dashboard for detecting and visualizing financial fraud using machine learning predictions and geospatial data.
 
-## 🚧 Features
+## Features
 
-- 🔍 **Fraud Prediction Charts** (Pie & Bar)
-- 🗺️ **Geospatial Fraud Map** using Mapbox
-- 📈 **Risk Score Trends** over time
-- ⏱️ **User Activity Timeline**
-- 🚨 **High-Risk User Alerts**
-- ⚡ FastAPI backend with Jinja2 templates
+- **Fraud Prediction Charts** (Pie & Bar)
+- **Geospatial Fraud Map** using Mapbox
+- **Risk Score Trends** over time
+- **User Activity Timeline**
+- **High-Risk User Alerts**
+- FastAPI backend with Jinja2 templates
 
-## 📁 Project Structure
+##  Project Structure
 
 financial-fraud-detection/
 ├── data/
@@ -26,7 +26,7 @@ financial-fraud-detection/
 └── README.md
 
 
-## 🚀 Run Locally
+## Run Locally
 
 ```bash
 # Step 1: Create virtual environment
