@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Financial Fraud Detection Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+        }
+
+        h2 {
+            color: #343a40;
+        }
+
+        canvas {
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #343a40;
+            color: #fff;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Financial Fraud Detection Dashboard</h1>
+
+    {% if data_available %}
+        <div class="chart-container">
+            <div>
+                <h2>Fraud Distribution</h2>
+                <canvas id="fraudPieChart"></canvas>
+            </div>
+            <div>
+                <h2>Confidence Scores</h2>
+                <canvas id="confidenceBarChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div>
+                <h2>Risk Scores Over Time</h2>
+                <canvas id="riskLineChart"></canvas>
+            </div>
+            <div>
+                <h2>User Activity Timeline</h2>
+                <canvas id="userTimelineChart"></canvas>
+            </div>
+        </div>
+
+        <h2>High-Risk Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Risk Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in high_risk_users %}
+                <tr>
+                    <td>{{ user.user_id }}</td>
+                    <td>{{ user.risk_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Geospatial Fraud Map</h2>
+        <div id="map"></div>
+
+    {% else %}
+        <p>No data available.</p>
+    {% endif %}
+
+    <script>
+        const fraudPieCtx = document.getElementById('fraudPieChart').getContext('2d');
+        const fraudCountNon = Number({{ fraud_counts['0'] if '0' in fraud_counts else 0 }});
+        const fraudCountYes = Number({{ fraud_counts['1'] if '1' in fraud_counts else 0 }});
+
+        new Chart(fraudPieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Non-Fraud', 'Fraud'],
+                datasets: [{
+                    data: [fraudCountNon, fraudCountYes],
+                    backgroundColor: ['#28a745', '#dc3545']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+       
+        const confidenceScores = {{ confidence_scores | tojson }};
+        const confidenceBarCtx = document.getElementById('confidenceBarChart').getContext('2d');
+        new Chart(confidenceBarCtx, {
+            type: 'bar',
+            data: {
+                labels: confidenceScores.map((_, i) => `#${i+1}`),
+                datasets: [{
+                    label: 'Confidence Scores',
+                    data: confidenceScores,
+                    backgroundColor: '#007bff'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true, max: 1 }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+  
+        const riskScores = {{ risk_scores | tojson }};
+        const riskLabels = riskScores.map(e => e.date);
+        const riskData = riskScores.map(e => e.score);
+        const riskLineCtx = document.getElementById('riskLineChart').getContext('2d');
+        new Chart(riskLineCtx, {
+            type: 'line',
+            data: {
+                labels: riskLabels,
+                datasets: [{
+                    label: 'Risk Score',
+                    data: riskData,
+                    borderColor: '#ffc107',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, max: 1 }
+                }
+            }
+        });
+
+     
+        const userActivities = {{ user_activities | tojson }};
+        const timelineLabels = userActivities.map(act => moment(act.timestamp).format('MMM D, HH:mm'));
+        const timelineData = userActivities.map((_, i) => i + 1);
+
+        const userTimelineCtx = document.getElementById('userTimelineChart').getContext('2d');
+        new Chart(userTimelineCtx, {
+            type: 'line',
+            data: {
+                labels: timelineLabels,
+                datasets: [{
+                    label: 'User Actions',
+                    data: timelineData,
+                    borderColor: '#17a2b8',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { display: false }
+                }
+            }
+        });
+
+      
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZGVtb3VzZXIiLCJhIjoiY2xwZ3oxOTBlMDAzNzNwbXk1d3c2eThjZCJ9.KfMY2p9zQ-FBnLG0-lW6XA';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [78.9629, 20.5937], 
+            zoom: 3.5
+        });
+        map.addControl(new mapboxgl.NavigationControl());
+
+        const geoData = {{ data | tojson }};
+        if (geoData.length > 0) {
+            const avgLng = geoData.reduce((sum, p) => sum + p.longitude, 0) / geoData.length;
+            const avgLat = geoData.reduce((sum, p) => sum + p.latitude, 0) / geoData.length;
+            map.setCenter([avgLng, avgLat]);
+            map.setZoom(5);
+
+            geoData.forEach(point => {
+                const color = point.fraud_confidence > 0.8 ? 'red' : 'orange';
+                new mapboxgl.Marker({ color })
+                    .setLngLat([point.longitude, point.latitude])
+                    .setPopup(new mapboxgl.Popup().setHTML(
+                        `<strong>Confidence:</strong> ${point.fraud_confidence.toFixed(2)}<br/>
+                         <strong>Fraud:</strong> ${point.is_fraud_predicted}`
+                    ))
+                    .addTo(map);
+            });
+        }
+    </script>
+</body>
+</html>
+

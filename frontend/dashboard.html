@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fraud Detection Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h2 {
+      text-align: center;
+    }
+    #chart-container {
+      width: 600px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Fraud vs Non-Fraud Counts</h2>
+  <div id="chart-container">
+    <canvas id="fraudChart"></canvas>
+  </div>
+
+  <script>
+    async function fetchFraudCounts() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/fraud_counts');
+        const data = await response.json();
+        const nonFraudCount = data["0"] || 0;
+        const fraudCount = data["1"] || 0;
+
+        return { nonFraudCount, fraudCount };
+      } catch (error) {
+        console.error('Error fetching fraud counts:', error);
+        return { nonFraudCount: 0, fraudCount: 0 };
+      }
+    }
+
+    async function renderChart() {
+      const counts = await fetchFraudCounts();
+
+      const ctx = document.getElementById('fraudChart').getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Non-Fraud', 'Fraud'],
+          datasets: [{
+            label: 'Number of Transactions',
+            data: [counts.nonFraudCount, counts.fraudCount],
+            backgroundColor: ['#4caf50', '#f44336']
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          }
+        }
+      });
+    }
+
+    renderChart();
+  </script>
+
+</body>
+</html>
