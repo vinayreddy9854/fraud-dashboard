@@ -29,15 +29,7 @@ financial-fraud-detection/
 ## Run Locally
 
 ```bash
-# Step 1: Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
-
-
-
-
-# Step 2: Install dependencies
 pip install fastapi uvicorn pandas jinja2
-
-# Step 3: Start the server
 uvicorn src.api.main:app --reload
